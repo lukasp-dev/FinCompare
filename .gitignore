@@ -1,13 +1,13 @@
-# Logs
-logs/
-*.log
-
 # Dependency directories
 node_modules/
 
 # Build outputs
 dist/
 build/
+
+# Logs
+*.log
+npm-debug.log*
 
 # Environment variables
 .env
