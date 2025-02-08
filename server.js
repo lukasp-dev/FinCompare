@@ -17,9 +17,9 @@ app.use(bodyParser.json());
 app.use("/api/problems", problemRoutes);
 app.use("/api/upload", uploadRoutes);
 
-// 📌 모든 요청을 로그로 출력
+// Log all requests (for debugging)
 app.use((req, res, next) => {
-  console.log(`🔍 [${req.method}] 요청 - 경로: ${req.url}`);
+  console.log(`🔍 [${req.method}] Request - Path: ${req.url}`);
   next();
 });
 

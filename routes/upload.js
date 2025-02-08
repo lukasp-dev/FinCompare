@@ -21,14 +21,14 @@ const upload = multer({ storage });
 
 router.post("/", upload.single("file"), async (req, res) => {
   if (!req.file) {
-    console.error("❌ 파일이 전달되지 않았습니다.");
-    return res.status(400).json({ error: "파일을 업로드하세요." });
+    console.error("❌ No file was provided.");
+    return res.status(400).json({ error: "Please upload a file." });
   }
 
   try {
-    console.log("✅ 파일이 성공적으로 받아졌습니다:", req.file.originalname);
-    console.log("📂 파일 타입:", req.file.mimetype);
-    console.log("📏 파일 크기:", req.file.size);
+    console.log("✅ File successfully received:", req.file.originalname);
+    console.log("📂 File type:", req.file.mimetype);
+    console.log("📏 File size:", req.file.size);
 
     const fileExtension = path.extname(req.file.originalname);
     const fileName = `${crypto.randomUUID()}${fileExtension}`;
@@ -38,17 +38,18 @@ router.post("/", upload.single("file"), async (req, res) => {
       Key: fileName,
       Body: req.file.buffer,
       ContentType: req.file.mimetype,
+      ACL: "public-read",
     };
 
-    console.log("📤 S3 업로드 시작:", uploadParams);
+    console.log("📤 Starting S3 upload:", uploadParams);
     await s3.send(new PutObjectCommand(uploadParams));
-    console.log("✅ S3 업로드 성공");
+    console.log("✅ S3 upload successful");
 
     const fileUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
     res.json({ fileUrl });
   } catch (error) {
-    console.error("❌ S3 업로드 오류:", error);
-    res.status(500).json({ error: "파일 업로드 실패", details: error.message });
+    console.error("❌ S3 upload error:", error);
+    res.status(500).json({ error: "File upload failed", details: error.message });
   }
 });
 
