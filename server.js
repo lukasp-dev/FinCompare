@@ -1,8 +1,38 @@
-import dotenv from "dotenv"; 
+import express from "express";
 import mongoose from "mongoose";
+import dotenv from "dotenv";
+import bodyParser from "body-parser";
+import problemRoutes from "./routes/problems.js";
+import { auth } from "express-openid-connect";
+import uploadRoutes from "./routes/upload.js";
 
+// Load environment variables
 dotenv.config();
 
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+const app = express();
+const PORT = process.env.PORT || 8080;
+
+// Middleware
+app.use(bodyParser.json());
+app.use("/api/problems", problemRoutes);
+app.use("/api/upload", uploadRoutes);
+
+// 📌 모든 요청을 로그로 출력
+app.use((req, res, next) => {
+  console.log(`🔍 [${req.method}] 요청 - 경로: ${req.url}`);
+  next();
+});
+
+// MongoDB connection
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("Connected to MongoDB Atlas"))
-  .catch(err => console.error("MongoDB connection error:", err));
+  .catch((err) => console.error("MongoDB connection error:", err));
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+});
