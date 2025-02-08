@@ -34,6 +34,7 @@ app.use(cors({
   origin: 'http://localhost:5173', //front-end cors
   credentials: true 
 }));
+app.use("/api/analyzeFileUrl", analyzeFileUrlRoutes);
 
 // Log all requests (for debugging)
 app.use((req, res, next) => {

@@ -38,7 +38,7 @@ router.post("/", upload.single("file"), async (req, res) => {
       Key: fileName,
       Body: req.file.buffer,
       ContentType: req.file.mimetype,
-      ACL: "public-read",
+      //ACL: "public-read",
     };
 
     console.log("📤 Starting S3 upload:", uploadParams);
