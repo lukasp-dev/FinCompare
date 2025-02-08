@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import problemRoutes from "./routes/problems.js";
+import analyzeFileUrlRoutes from "./routes/analyzeFileUrl.js";
 import { auth } from "express-openid-connect";
 import uploadRoutes from "./routes/upload.js";
 import cors from 'cors';
