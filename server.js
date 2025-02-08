@@ -4,9 +4,10 @@ import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import problemRoutes from "./routes/problems.js";
 import analyzeFileUrlRoutes from "./routes/analyzeFileUrl.js";
-import { auth } from "express-openid-connect";
 import uploadRoutes from "./routes/upload.js";
-import cors from 'cors';
+import balanceSheetRoutes from "./routes/balanceSheet.js"; // New balance sheet route
+import { auth } from "express-openid-connect";
+import cors from "cors";
 import jwt from "jsonwebtoken";
 
 // Load environment variables
@@ -20,7 +21,6 @@ const config = {
   issuerBaseURL: process.env.ISSUER,
 };
 
-
 const app = express();
 const PORT = process.env.PORT || 8080;
 
@@ -31,11 +31,15 @@ app.use("/api/upload", uploadRoutes);
 app.use(auth(config));
 
 // CORS config
-app.use(cors({
-  origin: 'http://localhost:5173', //front-end cors
-  credentials: true 
-}));
+app.use(
+  cors({
+    origin: "http://localhost:5173", // front-end cors
+    credentials: true,
+  })
+);
+
 app.use("/api/analyzeFileUrl", analyzeFileUrlRoutes);
+app.use("/api/balanceSheet", balanceSheetRoutes); // Mount the balance sheet endpoint
 
 // Log all requests (for debugging)
 app.use((req, res, next) => {
@@ -57,16 +61,16 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
 
-app.get('/login', (req, res) => {
+app.get("/login", (req, res) => {
   res.oidc.login();
 });
 
 // req.isAuthenticated is provided from the auth router
-app.get('/', (req, res) => {
-  res.send(req.oidc.isAuthenticated() ? 'Logged in' : 'Logged out');
+app.get("/", (req, res) => {
+  res.send(req.oidc.isAuthenticated() ? "Logged in" : "Logged out");
 });
 
-// ✅ Add token verification API (called from frontend after login)
+// Token verification API (called from frontend after login)
 app.post("/api/auth", async (req, res) => {
   const { token } = req.body; // Receive token from frontend
 
