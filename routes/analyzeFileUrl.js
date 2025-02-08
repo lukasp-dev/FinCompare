@@ -48,7 +48,13 @@ Here is the OCR extracted text from the image:
 ${ocrText}
 \`\`\`
 
-The OCR text may contain partial information for a balance sheet. Please extract as many numeric values as possible to fill the fields in the following structure. For any field where no value can be found, set it to 0. Also, set "id" to a unique string (for example, a UUID) and "year" to the current year if not available.
+The OCR text may contain partial information for a balance sheet. 
+Please extract as many numeric values as possible to fill the fields in the following 
+structure. For any field where no value can be found, set it to 0. Also, set "id" 
+to the name of the company, usually found at the very top 
+(If not at the top, use any company name found on the page. If not applicable, use a 
+unique string like UUID) and "year" to the current year if not available.
+If data is displayed for multiple years, for example if there is data for two years side by side, look at only the data for the column containing data for the MOST RECENT YEAR. Ignore the numerical data from the other, less recent year.
 
 The required JSON structure is:
 
