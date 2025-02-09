@@ -69,23 +69,17 @@ Our website is designed to make learning and utilizing financial statements both
             - For this calculation-based questions, hints about relevant formulas will be provided.
 
 ## 🖥️ Tech Stack
-### 🌐 Frontend
 
 ### 🌐 Frontend
-- **Core Frameworks & Libraries**
   ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
   ![Chart.js](https://img.shields.io/badge/Chart.js-FF6384?style=for-the-badge&logo=chartdotjs&logoColor=white)
-- **Build Tools & Bundlers**
   ![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
-- **Programming Languages & Utilities**
   ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
   ![Axios](https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=axios&logoColor=white)
 
-### 🛠 Backend
-- **Runtime Environment & Frameworks**
+### 🛠 Backend & Database 
   ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
   ![Express.js](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
-- **Database & Storage**
   ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
 
 ### ☁️ Cloud & API
