@@ -4,9 +4,8 @@ import dotenv from "dotenv";
 import { createWorker } from "tesseract.js";
 import { v4 as uuidv4 } from "uuid";
 import BalanceSheet from "../models/BalanceSheet.js"; // Ensure this file exists and exports a valid Mongoose model
-
-// Import the default export from the OpenAI package.
 import OpenAI from "openai";
+import XLSX from "xlsx"; // For parsing Excel files
 
 dotenv.config();
 
@@ -18,32 +17,63 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ error: "Missing fileUrl in request body." });
   }
   try {
-    // --- 1. OCR Step ---
-    console.log("Initializing OCR worker...");
-    // Create and initialize the worker for English recognition.
-    const worker = await createWorker("eng");
+    let extractedText = "";
+    const lowerUrl = fileUrl.toLowerCase();
 
-    console.log("Performing OCR on image:", fileUrl);
-    const {
-      data: { text: ocrText },
-    } = await worker.recognize(fileUrl);
-    console.log("OCR Text:\n", ocrText);
-    await worker.terminate();
+    // --- File Type Handling ---
+    if (lowerUrl.endsWith(".csv")) {
+      console.log("Fetching CSV file from:", fileUrl);
+      const csvResponse = await fetch(fileUrl);
+      if (!csvResponse.ok) {
+        throw new Error("Failed to fetch CSV file.");
+      }
+      extractedText = await csvResponse.text();
+      console.log("CSV Text:\n", extractedText);
+    } else if (lowerUrl.endsWith(".xls") || lowerUrl.endsWith(".xlsx")) {
+      console.log("Fetching Excel file from:", fileUrl);
+      const excelResponse = await fetch(fileUrl);
+      if (!excelResponse.ok) {
+        throw new Error("Failed to fetch Excel file.");
+      }
+      // Read response as an ArrayBuffer
+      const arrayBuffer = await excelResponse.arrayBuffer();
+      // Parse the Excel workbook
+      const workbook = XLSX.read(arrayBuffer, { type: "buffer" });
+      // Use the first sheet
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      // Convert the sheet to CSV text
+      const csvText = XLSX.utils.sheet_to_csv(worksheet);
+      console.log("Excel file converted to CSV text:\n", csvText);
+      extractedText = csvText;
+    } else {
+      // --- Assume Image File and Use OCR ---
+      console.log("Initializing OCR worker...");
+      const worker = await createWorker("eng");
+      console.log("Performing OCR on image:", fileUrl);
+      const { data: { text: ocrText } } = await worker.recognize(fileUrl);
+      console.log("OCR Text:\n", ocrText);
+      extractedText = ocrText;
+      await worker.terminate();
+    }
 
     // --- 2. OpenAI Analysis to Extract Balance Sheet Data ---
-    const prompt = `I have received the following image URL: ${fileUrl}
-Here is the OCR extracted text from the image:
+    const prompt = `
+I have received a file from the following URL: ${fileUrl}
+Here is the extracted text:
 \`\`\`
-${ocrText}
+${extractedText}
 \`\`\`
+The extracted text may come from either an image (via OCR) or from a CSV/Excel file.
+Please extract the relevant numeric values for a balance sheet and output a JSON object that follows the structure below.
+For any field where no numeric value is found, do not include that key in your JSON output.
+If data for multiple dates is shown, only take the data for the most recent date.
+Also, if available, extract the company name and assign it to the "name" field (if not available, use a unique identifier), and set "year" to the current year if not provided.
+The "identifier" field should be the raw concatenation of "name" and "year".
 
-The OCR text may contain partial information for a balance sheet. 
-Please extract as many numeric values as possible to fill the fields in the following 
-structure. For any field where you cannot find a numeric value, do not include that key in the JSON output. Also, set "name" 
-to the name of the company (if available; otherwise, use a unique string such as a UUID) and "year" to the current year if not available. "identifier" is just 'name' and 'year' appended together.
-If data is displayed for multiple years, for example if there is data for two years side by side, look at only the data for the column containing data for the MOST RECENT YEAR. Ignore the numerical data from the other, less recent year.
-If the data submitted is an INCOME statement, uses these values to fill out the following variables:
-{"income": number,
+If the data provided is from an income statement, also extract these fields:
+{
+  "income": number,
   "revenue": number,
   "profit": number,
   "operatingIncome": number,
@@ -51,14 +81,16 @@ If the data submitted is an INCOME statement, uses these values to fill out the 
   "interestExpense": number,
   "incomeTaxes": number,
   "depreciation": number,
-  "amortization": number}
-in the format below.
+  "amortization": number
+}
 
-The required JSON structure is:
+Output only the JSON without any markdown formatting.
+
+The expected JSON structure is:
 
 {
   "identifier": "string",
-  "name": "string"
+  "name": "string",
   "year": number,
   "assets": {
     "current": {
@@ -111,22 +143,18 @@ The required JSON structure is:
   "depreciation": number,
   "amortization": number
 }
+    `.trim();
 
-Please output only the JSON without any markdown formatting or code fences.`;
-
-    // Instantiate the OpenAI client using the API key from your .env file.
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    // Make the API call to the OpenAI chat completion endpoint.
     const completion = await openai.chat.completions.create({
-      model: "gpt-4", // Ensure you are using the correct model identifier
+      model: "gpt-4",
       messages: [
         {
           role: "system",
-          content:
-            "You are an assistant that extracts balance sheet data from provided OCR text and outputs valid JSON without any markdown formatting.",
+          content: "You are an assistant that extracts balance sheet data from provided text and outputs valid JSON without any markdown formatting.",
         },
         {
           role: "user",
@@ -137,17 +165,15 @@ Please output only the JSON without any markdown formatting or code fences.`;
       temperature: 0.3,
     });
 
-    // Extract the generated message content.
     const gptResponse = completion.choices[0].message.content;
     console.log("GPT Response:\n", gptResponse);
 
-    // Remove markdown code fences if present.
+    // --- 3. Parse the GPT Response as JSON ---
     const cleanedResponse = gptResponse
       .replace(/```(json)?/gi, "")
       .replace(/```/g, "")
       .trim();
 
-    // --- 3. Parse the GPT Response as JSON ---
     let balanceSheetData;
     try {
       balanceSheetData = JSON.parse(cleanedResponse);
@@ -160,21 +186,23 @@ Please output only the JSON without any markdown formatting or code fences.`;
           balanceSheetData = JSON.parse(jsonMatch[0]);
         } catch (err2) {
           console.error("Error parsing extracted JSON:", err2);
-          return res
-            .status(500)
-            .json({ error: "Failed to parse JSON from GPT response." });
+          return res.status(500).json({ error: "Failed to parse JSON from GPT response." });
         }
       } else {
-        return res
-          .status(500)
-          .json({ error: "No JSON object found in GPT response." });
+        return res.status(500).json({ error: "No JSON object found in GPT response." });
       }
     }
 
-    // --- 4. Save the Results in the Database ---
+    // If the parsed data is an array, select the object with the highest "year" value.
+    if (Array.isArray(balanceSheetData)) {
+      balanceSheetData = balanceSheetData.reduce((mostRecent, current) =>
+        current.year > mostRecent.year ? current : mostRecent, balanceSheetData[0]
+      );
+    }
+
     const balanceSheetRecord = new BalanceSheet({
       fileUrl,
-      ocrText,
+      ocrText: extractedText,
       balanceSheetData,
     });
     await balanceSheetRecord.save();
