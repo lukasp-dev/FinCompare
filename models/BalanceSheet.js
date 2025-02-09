@@ -1,18 +1,14 @@
-// routes/balanceSheet.js
-import express from 'express';
-import BalanceSheet from '../models/BalanceSheet.js';
+// models/BalanceSheet.js
+import mongoose from "mongoose";
 
-const router = express.Router();
+const BalanceSheetSchema = new mongoose.Schema(
+  {
+    fileUrl: { type: String, required: true },
+    ocrText: { type: String, required: true },
+    balanceSheetData: { type: mongoose.Schema.Types.Mixed, required: true },
+  },
+);
 
-// GET endpoint to return all balance sheet records sorted by creation date (latest first).
-router.get('/', async (req, res) => {
-  try {
-    const balanceSheets = await BalanceSheet.find().sort({ createdAt: -1 });
-    res.json(balanceSheets);
-  } catch (error) {
-    console.error("Error fetching balance sheet data:", error);
-    res.status(500).json({ error: error.message });
-  }
-});
+const BalanceSheet = mongoose.model("BalanceSheet", BalanceSheetSchema);
 
-export default router;
+export default BalanceSheet;
