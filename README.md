@@ -93,7 +93,6 @@ Our website is designed to make learning and utilizing financial statements both
 
 1. **Enhance Data Integration**
     - Support additional financial statement formats such as cash flow statements.
-    - Enable parsing of CSV and Excel files in addition to image uploads for improved input flexibility.
 2. **Expand Learning Game Content**
     - Introduce advanced financial analysis scenarios.
     - Enhance engagement by incorporating features such as avatar customization and competitive elements among users.
