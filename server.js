@@ -9,6 +9,7 @@ import uploadRoutes from "./routes/upload.js";
 import { auth } from "express-openid-connect";
 import cors from "cors";
 import jwt from "jsonwebtoken";
+import processDataRoute from "./routes/processData.js";
 
 
 dotenv.config();
@@ -42,6 +43,7 @@ app.use(
 app.use("/api/problems", problemRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/analyzeFileUrl", analyzeFileUrlRoutes);
+app.use("/api/process-data", processDataRoute);
 
 // Log all requests (only once)
 app.use((req, res, next) => {
