@@ -33,6 +33,47 @@ Our website is designed to make learning and utilizing financial statements both
     
     Designed with beginners in mind, our engaging and interactive game maximizes your learning experience.
     
+### 🚀 Setting Up UgaHacks & FinCompare  
+
+Follow these steps to get everything running smoothly!  
+
+
+
+1. ** Clone & Run the Frontend**  
+```sh
+git clone https://github.com/lukasp-dev/ugaHacks.git
+cd ugaHacks
+npm i
+npm run dev
+```
+Your frontend will be live at **http://localhost:5173** 🎉  
+
+
+
+2. ** Retrieve the Secret Sauce (.env) for Backend**  
+Head over to **[this secret vault](https://send.bitwarden.com/#xgNiTrXvF0CZVrJ_AMKM-Q/NsdjiLz8ip6hpn-SPw_mtg)** 🔐  
+- You’ll need a **magic word** to unlock it 🧙‍♂️  
+- Think **"the name of this hackathon"**, all lowercase 😉
+- might be `nameOfTheFrontendRepo.toLowerCase()`
+
+Once inside, copy the **.env** file contents.
+
+
+
+3. ** Clone & Run the Backend**  
+```sh
+git clone https://github.com/lukasp-dev/FinCompare.git
+cd FinCompare
+```
+- Create a `.env` file in the root directory and **paste** the secret contents.  
+
+Then, install dependencies & start the server:  
+```sh
+npm i
+node server.js
+```
+Your backend will be live at **http://localhost:8080** 🚀  
+
 
 ## 🚩 Getting Started
 
