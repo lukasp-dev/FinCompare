@@ -3,7 +3,7 @@ import express from "express";
 import dotenv from "dotenv";
 import { createWorker } from "tesseract.js";
 import { v4 as uuidv4 } from "uuid";
-import BalanceSheet from "../models/BalanceSheet.js"; // Adjust the path if necessary
+import BalanceSheet from "../models/BalanceSheet.js"; // Ensure this file exists and exports a valid Mongoose model
 
 // Import the default export from the OpenAI package.
 import OpenAI from "openai";
@@ -39,14 +39,26 @@ ${ocrText}
 
 The OCR text may contain partial information for a balance sheet. 
 Please extract as many numeric values as possible to fill the fields in the following 
-structure. For any field where no value can be found, set it to 0. Also, set "id" 
-to the name of the company (if available; otherwise, use a unique string such as a UUID) and "year" to the current year if not available.
+structure. For any field where no value can be found, set it to 0. Also, set "name" 
+to the name of the company (if available; otherwise, use a unique string such as a UUID) and "year" to the current year if not available. "identifier" is just 'name' and 'year' appended together.
 If data is displayed for multiple years, for example if there is data for two years side by side, look at only the data for the column containing data for the MOST RECENT YEAR. Ignore the numerical data from the other, less recent year.
+If the data submitted is an INCOME statement, uses these values to fill out the following variables:
+{"income": number,
+  "revenue": number,
+  "profit": number,
+  "operatingIncome": number,
+  "netIncome": number,
+  "interestExpense": number,
+  "incomeTaxes": number,
+  "depreciation": number,
+  "amortization": number}
+in the format below.
 
 The required JSON structure is:
 
 {
-  "id": "string",
+  "identifier": "string",
+  "name": "string"
   "year": number,
   "assets": {
     "current": {
@@ -98,7 +110,9 @@ The required JSON structure is:
   "incomeTaxes": number,
   "depreciation": number,
   "amortization": number
-}`;
+}
+
+Please output only the JSON without any markdown formatting or code fences.`;
 
     // Instantiate the OpenAI client using the API key from your .env file.
     const openai = new OpenAI({
@@ -107,12 +121,12 @@ The required JSON structure is:
 
     // Make the API call to the OpenAI chat completion endpoint.
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o", // Change this to "gpt-4" if you have access
+      model: "gpt-4", // Ensure you are using the correct model identifier
       messages: [
         {
           role: "system",
           content:
-            "You are an assistant that extracts balance sheet data from provided OCR text and outputs valid JSON.",
+            "You are an assistant that extracts balance sheet data from provided OCR text and outputs valid JSON without any markdown formatting.",
         },
         {
           role: "user",
@@ -127,14 +141,20 @@ The required JSON structure is:
     const gptResponse = completion.choices[0].message.content;
     console.log("GPT Response:\n", gptResponse);
 
+    // Remove markdown code fences if present.
+    const cleanedResponse = gptResponse
+      .replace(/```(json)?/gi, "")
+      .replace(/```/g, "")
+      .trim();
+
     // --- 3. Parse the GPT Response as JSON ---
     let balanceSheetData;
     try {
-      balanceSheetData = JSON.parse(gptResponse);
+      balanceSheetData = JSON.parse(cleanedResponse);
     } catch (err) {
       console.error("Error parsing GPT response as JSON:", err);
       // Attempt to extract a JSON substring if extra text is present.
-      const jsonMatch = gptResponse.match(/{[\s\S]*}/);
+      const jsonMatch = cleanedResponse.match(/{[\s\S]*}/);
       if (jsonMatch) {
         try {
           balanceSheetData = JSON.parse(jsonMatch[0]);
