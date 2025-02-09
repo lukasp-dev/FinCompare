@@ -33,7 +33,7 @@ Our website is designed to make learning and utilizing financial statements both
     
     Designed with beginners in mind, our engaging and interactive game maximizes your learning experience.
     
-### 🚀 Setting Up UgaHacks & FinCompare  
+## 🚀 Setting Up UgaHacks & FinCompare  
 
 Follow these steps to get everything running smoothly!  
 
